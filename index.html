@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0d0e10">
+  <meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
+  <meta name="googlebot" content="noindex, nofollow">
+  <meta name="referrer" content="no-referrer">
+  <title>IGO 2026 — nauka pytań</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app">
+    <section id="lock-screen" class="screen">
+      <h1>IGO 2026</h1>
+      <p class="subtitle">Wprowadź hasło, aby odblokować pytania</p>
+      <form id="lock-form" class="mode-card" action="#" method="post">
+        <input
+          type="text"
+          id="username"
+          name="username"
+          value="igo2026"
+          autocomplete="username"
+          readonly
+          tabindex="-1"
+          aria-hidden="true"
+          class="visually-hidden">
+        <div class="row">
+          <input
+            type="password"
+            id="password"
+            name="password"
+            placeholder="Hasło"
+            autocomplete="current-password"
+            autofocus>
+          <button type="submit" class="btn primary">Odblokuj</button>
+        </div>
+        <small id="lock-info" class="lock-info"></small>
+      </form>
+    </section>
+
+    <section id="start-screen" class="screen hidden">
+      <h1>IGO 2026</h1>
+      <p class="subtitle">Nauka pytań testowych</p>
+
+      <div class="mode-card">
+        <h2>Po kolei</h2>
+        <p>Pytania w kolejności. Wybierz numer startowy.</p>
+        <div class="row">
+          <input type="number" id="start-number" min="1" value="1" inputmode="numeric">
+          <button class="btn primary" data-mode="seq">Start</button>
+        </div>
+        <small id="total-info"></small>
+      </div>
+
+      <div class="mode-card">
+        <h2>Losowo</h2>
+        <p>Każde pytanie wylosowane z całej puli.</p>
+        <button class="btn primary" data-mode="random">Start</button>
+      </div>
+    </section>
+
+    <section id="quiz-screen" class="screen hidden">
+      <header class="quiz-header">
+        <span id="section-label" class="chip"></span>
+        <span id="counter" class="counter"></span>
+        <button id="back-to-menu" class="btn ghost" title="Zmień tryb">≡</button>
+      </header>
+
+      <main class="quiz-card">
+        <img id="question-image" alt="" class="hidden">
+        <h2 id="question-text"></h2>
+        <div id="options"></div>
+      </main>
+
+      <footer class="quiz-footer">
+        <button id="prev-btn" class="btn ghost hidden">← Wstecz</button>
+        <button id="next-btn" class="btn primary hidden">Dalej →</button>
+      </footer>
+    </section>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
