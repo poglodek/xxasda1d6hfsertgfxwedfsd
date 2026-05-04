@@ -1,26 +1,17 @@
 (function () {
   'use strict';
 
-  const PBKDF2_ITERATIONS = 250000;
-  const SALT_LEN = 16;
-  const IV_LEN = 12;
-  const ENC_URL = './questions.json.enc';
-
   const state = {
     questions: [],
     mode: null,
     index: 0,
     answered: false,
-    encryptedBlob: null,
   };
 
   const el = {
-    lock: document.getElementById('lock-screen'),
-    lockForm: document.getElementById('lock-form'),
-    password: document.getElementById('password'),
-    lockInfo: document.getElementById('lock-info'),
     start: document.getElementById('start-screen'),
     quiz: document.getElementById('quiz-screen'),
+    loader: document.getElementById('loader'),
     totalInfo: document.getElementById('total-info'),
     startNumber: document.getElementById('start-number'),
     sectionLabel: document.getElementById('section-label'),
@@ -34,80 +25,9 @@
   };
 
   function showScreen(name) {
-    el.lock.classList.toggle('hidden', name !== 'lock');
     el.start.classList.toggle('hidden', name !== 'start');
     el.quiz.classList.toggle('hidden', name !== 'quiz');
   }
-
-  // === Crypto ===
-
-  async function deriveKey(password, salt) {
-    const enc = new TextEncoder();
-    const baseKey = await crypto.subtle.importKey(
-      'raw',
-      enc.encode(password),
-      { name: 'PBKDF2' },
-      false,
-      ['deriveKey']
-    );
-    return crypto.subtle.deriveKey(
-      {
-        name: 'PBKDF2',
-        salt: salt,
-        iterations: PBKDF2_ITERATIONS,
-        hash: 'SHA-256',
-      },
-      baseKey,
-      { name: 'AES-GCM', length: 256 },
-      false,
-      ['decrypt']
-    );
-  }
-
-  async function decryptBlob(blob, password) {
-    const buf = new Uint8Array(blob);
-    const salt = buf.slice(0, SALT_LEN);
-    const iv = buf.slice(SALT_LEN, SALT_LEN + IV_LEN);
-    const ciphertext = buf.slice(SALT_LEN + IV_LEN);
-
-    const key = await deriveKey(password, salt);
-    const plaintext = await crypto.subtle.decrypt(
-      { name: 'AES-GCM', iv: iv },
-      key,
-      ciphertext
-    );
-    const text = new TextDecoder().decode(plaintext);
-    return JSON.parse(text);
-  }
-
-  async function fetchEncrypted() {
-    const res = await fetch(ENC_URL);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    return res.arrayBuffer();
-  }
-
-  async function unlock(password) {
-    el.lockInfo.textContent = 'Deszyfruję…';
-    el.lockInfo.classList.remove('error');
-    try {
-      if (!state.encryptedBlob) {
-        state.encryptedBlob = await fetchEncrypted();
-      }
-      const data = await decryptBlob(state.encryptedBlob, password);
-      state.questions = data;
-      el.totalInfo.textContent = `Łącznie ${data.length} pytań.`;
-      el.startNumber.max = data.length;
-      el.password.value = '';
-      el.lockInfo.textContent = '';
-      showScreen('start');
-    } catch (err) {
-      el.lockInfo.textContent = 'Złe hasło lub uszkodzony plik.';
-      el.lockInfo.classList.add('error');
-      el.password.select();
-    }
-  }
-
-  // === Quiz ===
 
   function startMode(mode) {
     state.mode = mode;
@@ -220,12 +140,21 @@
     showScreen('start');
   }
 
+  async function loadQuestions() {
+    try {
+      const res = await fetch('./questions.json');
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      state.questions = data;
+      el.loader.classList.add('hidden');
+      el.totalInfo.textContent = `Łącznie ${data.length} pytań.`;
+      el.startNumber.max = data.length;
+    } catch (err) {
+      el.loader.textContent = `Błąd wczytywania: ${err.message}`;
+    }
+  }
+
   function bindEvents() {
-    el.lockForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const pwd = el.password.value;
-      if (pwd) unlock(pwd);
-    });
     document.querySelectorAll('[data-mode]').forEach((b) => {
       b.addEventListener('click', () => startMode(b.dataset.mode));
     });
@@ -238,4 +167,5 @@
   }
 
   bindEvents();
+  loadQuestions();
 })();
